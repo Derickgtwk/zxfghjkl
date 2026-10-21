@@ -1,0 +1,29 @@
+name: Build VST3 (Windows)
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          $bundle = Get-ChildItem -Path build -Recurse -Directory -Filter *.vst3 | Select-Object -First 1
+          Copy-Item -Recurse $bundle.FullName dist/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RCA-T1-Transformer-VST3-Windows
+          path: dist
